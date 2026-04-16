@@ -1,0 +1,693 @@
+{
+  "patternId": "sliding-window",
+  "cards": [
+    {
+      "id": "sw-easy-01",
+      "patternId": "sliding-window",
+      "difficulty": "easy",
+      "index": 1,
+      "conceptTags": ["sliding-window"],
+      "problem": {
+        "text": "Given an array of integers nums and an integer k, find the maximum sum of any contiguous subarray of exactly size k.",
+        "keywords": [
+          { "word": "contiguous subarray", "explanation": "adjacent elements only — no skipping" },
+          { "word": "exactly size k",      "explanation": "fixed window — never shrinks or grows" },
+          { "word": "maximum sum",         "explanation": "the requirement: what you must optimise for" }
+        ],
+        "missingConstraints": [
+          "Can nums contain negative integers?",
+          "Can nums be empty or null?",
+          "Is k guaranteed to be ≤ nums.length?"
+        ],
+        "hasMissingConstraints": true
+      },
+      "concepts": [
+        {
+          "term": "Contiguous subarray",
+          "definition": "A slice where elements are adjacent in index order — no skipping. Must be a consecutive run from the original array.",
+          "example": "nums = [1, 3, 5, 2, 4]  k = 3\nvalid:   [1,3,5]  [3,5,2]  [5,2,4]  ✓\ninvalid: [1,5,4]  (skips index 2)   ✗"
+        }
+      ],
+      "choices": {
+        "easy_medium": [
+          { "id": "A", "text": "Sort the array, then use binary search to find the max window", "type": "wrong",    "explanation": "Sorting destroys positional order — 'contiguous' means index-adjacency matters, so sorting immediately invalidates the approach." },
+          { "id": "B", "text": "Two nested loops — outer sets the start index, inner sums k elements", "type": "plausible", "explanation": "Correct but O(n·k). The sliding window reuses the previous window sum to get O(n) — no reason to recompute from scratch each time." },
+          { "id": "C", "text": "Sliding window — add the right element, subtract the left element as the window moves", "type": "correct",  "explanation": "Fixed-size window: one addition and one subtraction per step. O(n) time, O(1) space." }
+        ]
+      },
+      "guidedScaffold": "// 1. initialise windowSum and maxSum\n// 2. loop i from 0 to nums.length-1\n// 3. expand right: windowSum += nums[i]\n// 4. when window is full (i >= k-1):\n//    a. update maxSum\n//    b. shrink left: windowSum -= nums[i - k + 1]",
+      "sayApproach": "The key words are 'contiguous' and 'exactly size k' — contiguous means index-order matters so sorting is out, and the fixed size means I never need to grow or shrink conditionally. I'll use a fixed sliding window: add the right element on every step, and once the window reaches size k I record the max and subtract the leftmost element. One pass — O(n) time, O(1) space. Before I code: can nums contain negative integers? Is k guaranteed to be ≤ nums.length?",
+      "code": {
+        "lines": [
+          { "text": "int solve(int[] nums, int k) {",                             "annotation": "pattern",     "narration": "My function takes the array and window size k" },
+          { "text": "    int windowSum = 0, maxSum = Integer.MIN_VALUE;",         "annotation": "requirement", "narration": "maxSum = MIN_VALUE — correctly handles all-negative inputs" },
+          { "text": "    for (int i = 0; i < nums.length; i++) {",               "annotation": "pattern",     "narration": "Single pass through the array" },
+          { "text": "        windowSum += nums[i];",                              "annotation": "pattern",     "narration": "Pattern: expand right — add the incoming element" },
+          { "text": "        if (i >= k - 1) {",                                 "annotation": "constraint",  "narration": "Constraint k: only act once the window is full" },
+          { "text": "            maxSum = Math.max(maxSum, windowSum);",         "annotation": "requirement", "narration": "Requirement: track the maximum sum seen" },
+          { "text": "            windowSum -= nums[i - k + 1];",                 "annotation": "pattern",     "narration": "Pattern: shrink left — drop the oldest element" },
+          { "text": "        }",                                                  "annotation": "none",        "narration": "" },
+          { "text": "    }",                                                      "annotation": "none",        "narration": "" },
+          { "text": "    return maxSum;",                                         "annotation": "requirement", "narration": "Return the answer" },
+          { "text": "}",                                                          "annotation": "none",        "narration": "" }
+        ]
+      },
+      "complexity": { "time": "O(n)", "space": "O(1)" },
+      "verbalSummary": "Single-pass fixed sliding window. I expand right by adding each element, and once the window fills to size k I record the max and shrink left by subtracting the oldest element. Time O(n), space O(1). Key edge case: I initialised maxSum to Integer.MIN_VALUE rather than zero — this correctly handles arrays where all values are negative.",
+      "solRatingCriteria": [
+        "Identified 'contiguous' + 'fixed size k' as the sliding window signal",
+        "Explained why sorting invalidates the contiguous constraint",
+        "Stated O(n) time and O(1) space with justification",
+        "Mentioned Integer.MIN_VALUE edge case for all-negative arrays"
+      ],
+      "modifications": [
+        {
+          "question": "What if k is not fixed — find the longest subarray with sum ≤ target?",
+          "tag": "variable-window",
+          "approach": "Switch to a variable window: expand right freely, shrink from the left while sum exceeds target. Track max length (right - left + 1) instead of max sum. The shrink condition changes from a size check to a value check.",
+          "codeChunk": "while (windowSum > target) windowSum -= nums[left++];\nmaxLen = Math.max(maxLen, right - left + 1);"
+        },
+        {
+          "question": "Return the start and end indices of the max-sum window, not the sum.",
+          "tag": "index-tracking",
+          "approach": "Track a bestStart variable alongside maxSum. When updating maxSum, record i - k + 1 as bestStart. Return int[] { bestStart, bestStart + k - 1 }.",
+          "codeChunk": "if (windowSum > maxSum) { maxSum = windowSum; bestStart = i - k + 1; }\nreturn new int[]{ bestStart, bestStart + k - 1 };"
+        },
+        {
+          "question": "The input is now a 2D matrix — find the k×k submatrix with maximum sum.",
+          "tag": "2d-extension",
+          "approach": "Precompute row-prefix sums so any row-range sum is O(1). Then slide a window of k rows, using column prefix sums to reduce each column strip to a 1D sliding window problem. O(n²) overall.",
+          "codeChunk": "// Precompute row prefix sums\nrowSum[i][j] = rowSum[i][j-1] + matrix[i][j];\n// Then apply 1D window per column strip of k rows"
+        }
+      ]
+    },
+    {
+      "id": "sw-easy-02",
+      "patternId": "sliding-window",
+      "difficulty": "easy",
+      "index": 2,
+      "conceptTags": ["sliding-window", "frequency-count"],
+      "problem": {
+        "text": "Given a string s, find the length of the longest substring without repeating characters.",
+        "keywords": [
+          { "word": "longest substring",            "explanation": "maximise length — variable window" },
+          { "word": "without repeating characters", "explanation": "the window validity condition" }
+        ],
+        "missingConstraints": [
+          "Is the input lowercase only, or any Unicode/ASCII?",
+          "Can s be empty?"
+        ],
+        "hasMissingConstraints": true
+      },
+      "concepts": [
+        {
+          "term": "Substring vs subsequence",
+          "definition": "A substring is contiguous — consecutive characters in order. A subsequence can skip characters. This problem says 'substring' so characters must be adjacent.",
+          "example": "s = \"abcde\"\nsubstrings:    \"abc\" \"bcd\" \"cde\"       ✓ (contiguous)\nsubsequences:  \"ace\" \"bd\"               ✗ (not this problem)"
+        }
+      ],
+      "choices": {
+        "easy_medium": [
+          { "id": "A", "text": "Generate all substrings with two nested loops, check each for uniqueness", "type": "wrong",    "explanation": "O(n²) or O(n³) — correct but far too slow. The sliding window solves this in O(n)." },
+          { "id": "B", "text": "Sliding window with a HashSet — shrink window when a duplicate enters", "type": "correct",  "explanation": "Expand right freely; when a duplicate appears, remove chars from the left until the window is valid again. O(n) amortised." },
+          { "id": "C", "text": "Sort the string and scan for the longest run of unique chars", "type": "plausible", "explanation": "Sorting destroys substring order — 'longest substring' is position-dependent, so sorting immediately breaks the problem." }
+        ]
+      },
+      "guidedScaffold": "// 1. Use a HashSet to track chars in current window\n// 2. left pointer starts at 0\n// 3. for each right: if char in set, remove from left until clear\n// 4. add right char to set\n// 5. update maxLen",
+      "sayApproach": "The condition 'without repeating characters' tells me the window is valid as long as all chars are unique — that's a variable window. I'll expand right, and whenever I see a duplicate I shrink from the left until the window is clean again. A HashSet lets me check membership and remove in O(1). Overall O(n) since each character enters and exits the window at most once.",
+      "code": {
+        "lines": [
+          { "text": "int solve(String s) {",                               "annotation": "pattern",     "narration": "Function takes the string" },
+          { "text": "    Set<Character> seen = new HashSet<>();",           "annotation": "constraint",  "narration": "Constraint: track uniqueness — HashSet for O(1) lookup" },
+          { "text": "    int left = 0, maxLen = 0;",                       "annotation": "requirement", "narration": "maxLen tracks the requirement" },
+          { "text": "    for (int right = 0; right < s.length(); right++) {","annotation": "pattern",   "narration": "Expand right on every step" },
+          { "text": "        while (seen.contains(s.charAt(right))) {",    "annotation": "constraint",  "narration": "Constraint violated: duplicate found — shrink left" },
+          { "text": "            seen.remove(s.charAt(left++));",          "annotation": "pattern",     "narration": "Remove leftmost char and advance left pointer" },
+          { "text": "        }",                                            "annotation": "none",        "narration": "" },
+          { "text": "        seen.add(s.charAt(right));",                  "annotation": "pattern",     "narration": "Add the new right character" },
+          { "text": "        maxLen = Math.max(maxLen, right-left+1);",    "annotation": "requirement", "narration": "Requirement: update max length" },
+          { "text": "    }",                                                "annotation": "none",        "narration": "" },
+          { "text": "    return maxLen;",                                   "annotation": "requirement", "narration": "Return the answer" },
+          { "text": "}",                                                    "annotation": "none",        "narration": "" }
+        ]
+      },
+      "complexity": { "time": "O(n)", "space": "O(min(n, charset))" },
+      "verbalSummary": "Variable sliding window with a HashSet. Expand right freely; when a duplicate enters shrink from the left. Each character enters and exits the window at most once so time is O(n). Space is O(min(n, charset size)) — bounded by the size of the alphabet.",
+      "solRatingCriteria": [
+        "Identified 'without repeating' as a variable window validity condition",
+        "Chose HashSet for O(1) membership check and removal",
+        "Stated O(n) time with the 'each char enters/exits once' justification",
+        "Noted space depends on character set size, not just n"
+      ],
+      "modifications": [
+        {
+          "question": "What if the string can have at most k replacements — find the longest substring with at most k distinct characters?",
+          "tag": "at-most-k",
+          "approach": "Replace the HashSet with a HashMap tracking character frequencies. Shrink left when map.size() > k (too many distinct). The window is valid as long as distinct count ≤ k.",
+          "codeChunk": "while (freq.size() > k) {\n    char l = s.charAt(left++);\n    freq.merge(l, -1, Integer::sum);\n    if (freq.get(l) == 0) freq.remove(l);\n}"
+        },
+        {
+          "question": "Find the longest substring where you can replace at most k characters to make all chars the same.",
+          "tag": "replace-k",
+          "approach": "Track frequency of the most common character in the window. If (windowSize - maxFreq) > k, shrink. This is Leetcode 424.",
+          "codeChunk": "maxFreq = Math.max(maxFreq, freq.getOrDefault(c, 0));\nif ((right - left + 1) - maxFreq > k) {\n    freq.merge(s.charAt(left++), -1, Integer::sum);\n}"
+        }
+      ]
+    },
+    {
+      "id": "sw-easy-03",
+      "patternId": "sliding-window",
+      "difficulty": "easy",
+      "index": 3,
+      "conceptTags": ["sliding-window", "prefix-sum"],
+      "problem": {
+        "text": "Given an array of positive integers nums and a positive integer target, return the minimal length of a contiguous subarray whose sum is greater than or equal to target. Return 0 if no such subarray exists.",
+        "keywords": [
+          { "word": "minimal length",          "explanation": "requirement: minimise the window size" },
+          { "word": "contiguous subarray",      "explanation": "variable window — indices must be adjacent" },
+          { "word": "sum ≥ target",             "explanation": "the window validity condition — shrink once met" },
+          { "word": "positive integers",        "explanation": "key constraint — allows shrinking to always work" }
+        ],
+        "missingConstraints": [
+          "Are all integers guaranteed positive? (critical — negative values break this approach)",
+          "What if no valid subarray exists — return 0 or -1?"
+        ],
+        "hasMissingConstraints": true
+      },
+      "concepts": [
+        {
+          "term": "Why positive integers matter",
+          "definition": "With all-positive values, adding more elements always increases the sum and removing always decreases it. This monotonic property is what makes the sliding window work — if the sum drops below target after shrinking, expanding right will always recover it.",
+          "example": "If nums had negatives, shrinking might accidentally increase the sum,\nbreaking the shrink-when-valid logic entirely → would need different approach"
+        }
+      ],
+      "choices": {
+        "easy_medium": [
+          { "id": "A", "text": "Prefix sums + binary search for minimum valid window", "type": "plausible", "explanation": "O(n log n) — works, but the variable sliding window is O(n). Binary search is unnecessary when the monotonic property holds." },
+          { "id": "B", "text": "Variable sliding window — expand right until sum ≥ target, then shrink left to minimise", "type": "correct",  "explanation": "O(n) — expand to reach target, record length, then shrink to find if a shorter valid window exists. Positive values guarantee monotonic behaviour." },
+          { "id": "C", "text": "Sort and use two pointers from both ends", "type": "wrong",    "explanation": "Sorting destroys index order — 'contiguous subarray' is a positional constraint." }
+        ]
+      },
+      "guidedScaffold": "// 1. int left = 0, windowSum = 0, minLen = Integer.MAX_VALUE\n// 2. for right from 0 to nums.length-1:\n//    a. windowSum += nums[right]  (expand)\n//    b. while windowSum >= target:\n//       - update minLen\n//       - windowSum -= nums[left++]  (shrink)\n// 3. return minLen == MAX_VALUE ? 0 : minLen",
+      "sayApproach": "All values are positive — that's the key. Because adding elements always increases the sum and removing always decreases it, I can use a variable window: expand right until sum reaches target, then record the length and shrink from the left to see if a shorter window is still valid. O(n) since each element enters and exits the window at most once.",
+      "code": {
+        "lines": [
+          { "text": "int solve(int[] nums, int target) {",                        "annotation": "pattern",     "narration": "Function takes the array and target" },
+          { "text": "    int left = 0, sum = 0, minLen = Integer.MAX_VALUE;",     "annotation": "requirement", "narration": "minLen = MAX_VALUE — handle the 'no valid window' case" },
+          { "text": "    for (int right = 0; right < nums.length; right++) {",   "annotation": "pattern",     "narration": "Expand right on every step" },
+          { "text": "        sum += nums[right];",                                 "annotation": "pattern",     "narration": "Pattern: add incoming element" },
+          { "text": "        while (sum >= target) {",                            "annotation": "constraint",  "narration": "Constraint met — window is valid, try to shrink" },
+          { "text": "            minLen = Math.min(minLen, right-left+1);",      "annotation": "requirement", "narration": "Requirement: record minimum length" },
+          { "text": "            sum -= nums[left++];",                           "annotation": "pattern",     "narration": "Pattern: shrink left to find shorter valid window" },
+          { "text": "        }",                                                   "annotation": "none",        "narration": "" },
+          { "text": "    }",                                                       "annotation": "none",        "narration": "" },
+          { "text": "    return minLen == Integer.MAX_VALUE ? 0 : minLen;",      "annotation": "requirement", "narration": "Requirement: return 0 if no valid window found" },
+          { "text": "}",                                                           "annotation": "none",        "narration": "" }
+        ]
+      },
+      "complexity": { "time": "O(n)", "space": "O(1)" },
+      "verbalSummary": "Variable sliding window relying on the all-positive guarantee. Expand right until sum ≥ target, then shrink left while valid to find the minimum length. O(n) — each element enters and exits the window at most once. Initialise minLen to MAX_VALUE and return 0 if it never updates.",
+      "solRatingCriteria": [
+        "Identified the all-positive constraint as what makes sliding window viable",
+        "Explained the expand-then-shrink logic for minimisation",
+        "Stated O(n) with the 'each element enters/exits once' reasoning",
+        "Handled the no-valid-window edge case with MAX_VALUE sentinel"
+      ],
+      "modifications": [
+        {
+          "question": "What if nums can contain negative integers?",
+          "tag": "with-negatives",
+          "approach": "Sliding window breaks with negatives. Use prefix sums + monotonic deque for O(n), or prefix sums + binary search for O(n log n). The deque maintains indices of increasing prefix sums for efficient range queries.",
+          "codeChunk": "// Prefix sum approach\nint[] prefix = new int[n + 1];\nfor (int i = 0; i < n; i++) prefix[i+1] = prefix[i] + nums[i];\n// Then binary search or deque for minimum window"
+        }
+      ]
+    },
+    {
+      "id": "sw-medium-01",
+      "patternId": "sliding-window",
+      "difficulty": "medium",
+      "index": 1,
+      "conceptTags": ["sliding-window", "frequency-count", "hashmap"],
+      "problem": {
+        "text": "Given a string s and integer k, return the length of the longest substring containing at most k distinct characters.",
+        "keywords": [
+          { "word": "longest substring",        "explanation": "variable window — maximise length" },
+          { "word": "at most k distinct",       "explanation": "window validity: distinct character count ≤ k" }
+        ],
+        "missingConstraints": [
+          "Is the character set lowercase only, or full ASCII/Unicode?",
+          "Is k = 0 a valid input — should empty string be returned?",
+          "Can s be empty?"
+        ],
+        "hasMissingConstraints": true
+      },
+      "concepts": [
+        {
+          "term": "Distinct characters vs total characters",
+          "definition": "'At most k distinct' means the window may contain up to k unique character types — but any count of each. It does NOT limit the total number of characters.",
+          "example": "k = 2\n\"aabbb\"  → distinct: {a, b} = 2  ✓  valid\n\"aaabbc\" → distinct: {a, b, c} = 3  ✗  too many\n\"aaaaa\"  → distinct: {a} = 1  ✓  valid (under limit)"
+        }
+      ],
+      "choices": {
+        "easy_medium": [
+          { "id": "A", "text": "Variable sliding window with HashMap tracking char frequencies — shrink when distinct count exceeds k", "type": "correct",  "explanation": "HashMap.size() directly gives the number of distinct characters. Remove key when its count reaches 0. O(n) time, O(k) space." },
+          { "id": "B", "text": "Variable sliding window with int[26] frequency array (assuming lowercase)", "type": "plausible", "explanation": "Valid only if the interviewer confirmed lowercase ASCII. Without that confirmation, HashMap is the safer general answer. Always confirm the character set first." },
+          { "id": "C", "text": "Sort the string, find the longest run of ≤ k distinct chars", "type": "wrong",    "explanation": "Sorting destroys positional order — 'substring' requires consecutive characters by original index." }
+        ]
+      },
+      "guidedScaffold": "// 1. Map<Character, Integer> freq = new HashMap<>()\n// 2. int left = 0, maxLen = 0\n// 3. for right from 0 to s.length()-1:\n//    a. freq.merge(s.charAt(right), 1, Integer::sum)\n//    b. while freq.size() > k: shrink left\n//    c. maxLen = max(maxLen, right - left + 1)",
+      "sayApproach": "Asking first: is this lowercase only, or any character set? The window is valid as long as distinct character count ≤ k. I'll use a HashMap — its size directly tells me the distinct count. Expand right freely; when the map has more than k entries, shrink from the left, removing the count and deleting the key when it reaches zero. O(n) time, O(k) space.",
+      "code": {
+        "lines": [
+          { "text": "int solve(String s, int k) {",                              "annotation": "pattern",     "narration": "Takes the string and k" },
+          { "text": "    Map<Character, Integer> freq = new HashMap<>();",        "annotation": "constraint",  "narration": "Constraint: track distinct chars — HashMap size = distinct count" },
+          { "text": "    int left = 0, maxLen = 0;",                             "annotation": "requirement", "narration": "maxLen tracks the requirement" },
+          { "text": "    for (int right = 0; right < s.length(); right++) {",    "annotation": "pattern",     "narration": "Expand right" },
+          { "text": "        freq.merge(s.charAt(right), 1, Integer::sum);",     "annotation": "pattern",     "narration": "Add right char to frequency map" },
+          { "text": "        while (freq.size() > k) {",                         "annotation": "constraint",  "narration": "Constraint: too many distinct chars — shrink" },
+          { "text": "            char l = s.charAt(left++);",                    "annotation": "pattern",     "narration": "Get and advance left pointer" },
+          { "text": "            freq.merge(l, -1, Integer::sum);",              "annotation": "pattern",     "narration": "Decrement count" },
+          { "text": "            if (freq.get(l) == 0) freq.remove(l);",        "annotation": "constraint",  "narration": "Remove key when count hits zero — keeps size accurate" },
+          { "text": "        }",                                                  "annotation": "none",        "narration": "" },
+          { "text": "        maxLen = Math.max(maxLen, right-left+1);",         "annotation": "requirement", "narration": "Requirement: update max length" },
+          { "text": "    }",                                                      "annotation": "none",        "narration": "" },
+          { "text": "    return maxLen;",                                         "annotation": "requirement", "narration": "Return answer" },
+          { "text": "}",                                                          "annotation": "none",        "narration": "" }
+        ]
+      },
+      "complexity": { "time": "O(n)", "space": "O(k)" },
+      "verbalSummary": "Variable sliding window using a HashMap where the map size gives the distinct character count. Expand right; shrink left when size exceeds k, removing the key entirely when its count reaches zero. O(n) time, O(k) space — the map never holds more than k+1 entries.",
+      "solRatingCriteria": [
+        "Asked about character set before choosing data structure",
+        "Used HashMap.size() as the distinct count — not a separate counter",
+        "Removed key when count reaches zero to keep size accurate",
+        "Stated O(k) space rather than O(n)"
+      ],
+      "modifications": [
+        {
+          "question": "Now find the longest substring with exactly k distinct characters.",
+          "tag": "exactly-k",
+          "approach": "atMostK(s, k) - atMostK(s, k-1). The difference gives exactly-k. Reuse the at-most-k function. This is a standard trick.",
+          "codeChunk": "return atMostK(s, k) - atMostK(s, k - 1);"
+        }
+      ]
+    },
+    {
+      "id": "sw-medium-02",
+      "patternId": "sliding-window",
+      "difficulty": "medium",
+      "index": 2,
+      "conceptTags": ["sliding-window", "frequency-count", "hashmap"],
+      "problem": {
+        "text": "Given a string s and a non-empty string p, find all the start indices of p's anagrams in s. Return them in any order.",
+        "keywords": [
+          { "word": "anagrams",          "explanation": "same characters, same frequency, any order" },
+          { "word": "all start indices", "explanation": "collect all valid window positions — not just one" },
+          { "word": "fixed window size", "explanation": "window is exactly p.length() — fixed sliding window" }
+        ],
+        "missingConstraints": [
+          "Are both strings guaranteed non-empty?",
+          "Is the character set lowercase only?"
+        ],
+        "hasMissingConstraints": true
+      },
+      "concepts": [
+        {
+          "term": "Anagram detection",
+          "definition": "Two strings are anagrams if they have the same characters with the same frequencies. The order doesn't matter. Comparing frequency maps is the standard O(1) per window check.",
+          "example": "p = \"abc\"  →  freq: {a:1, b:1, c:1}\n\"bca\"  →  freq: {a:1, b:1, c:1}  ✓ anagram\n\"bac\"  →  freq: {a:1, b:1, c:1}  ✓ anagram\n\"abc\"  →  freq: {a:1, b:1, c:1}  ✓ anagram\n\"aab\"  →  freq: {a:2, b:1}        ✗ not anagram"
+        }
+      ],
+      "choices": {
+        "easy_medium": [
+          { "id": "A", "text": "Fixed sliding window with two frequency arrays, compare on each step", "type": "correct",  "explanation": "Window is exactly p.length(). Slide across s, maintaining a window frequency map. Use a 'matches' counter to avoid full map comparison on each step — O(n)." },
+          { "id": "B", "text": "Sort each window of size p.length() and compare to sorted p", "type": "plausible", "explanation": "O(n × k log k) where k = p.length(). Correct but slow. Sorting a window on every step is unnecessary when frequency comparison is O(1) with the counter trick." },
+          { "id": "C", "text": "Use a HashSet to track unique characters and compare sets", "type": "wrong",    "explanation": "A set only tells you which characters appear, not how many times. 'aab' and 'abc' have the same character set but are not anagrams." }
+        ]
+      },
+      "guidedScaffold": "// 1. Build need[] freq array from p\n// 2. Build window[] freq array for first p.length() chars\n// 3. Count initial 'matches' (positions where need[i] == window[i])\n// 4. Slide: add right, remove left, update matches\n// 5. If matches == 26, add left to result",
+      "sayApproach": "The window is always exactly p.length() — fixed size. I'll build a frequency array for p (need[]) and maintain a window frequency array (window[]). Instead of comparing all 26 characters each step, I track a 'matches' counter — the number of character positions where need and window agree. When matches reaches 26, the window is an anagram. On each slide I add the new right character and remove the old left, updating matches in O(1). Overall O(n).",
+      "code": {
+        "lines": [
+          { "text": "List<Integer> solve(String s, String p) {",               "annotation": "pattern",     "narration": "Return all start indices" },
+          { "text": "    int[] need = new int[26], win = new int[26];",         "annotation": "constraint",  "narration": "Constraint: lowercase only — int[26] is safe and faster than HashMap" },
+          { "text": "    for (char c : p.toCharArray()) need[c-'a']++;",        "annotation": "constraint",  "narration": "Build target frequency from p" },
+          { "text": "    int k = p.length(), matches = 0;",                     "annotation": "constraint",  "narration": "Fixed window size k; matches counter avoids full array compare" },
+          { "text": "    List<Integer> res = new ArrayList<>();",               "annotation": "requirement", "narration": "Collect all valid positions" },
+          { "text": "    for (int r = 0; r < s.length(); r++) {",              "annotation": "pattern",     "narration": "Expand right on every step" },
+          { "text": "        int rc = s.charAt(r) - 'a';",                     "annotation": "pattern",     "narration": "Right character index" },
+          { "text": "        win[rc]++;",                                        "annotation": "pattern",     "narration": "Add to window" },
+          { "text": "        if (win[rc] == need[rc]) matches++;",              "annotation": "constraint",  "narration": "Constraint met for this char — increment matches" },
+          { "text": "        else if (win[rc] == need[rc]+1) matches--;",       "annotation": "constraint",  "narration": "Overshot — decrement matches" },
+          { "text": "        if (r >= k) {",                                    "annotation": "pattern",     "narration": "Window exceeds size k — shrink left" },
+          { "text": "            int lc = s.charAt(r-k) - 'a';",              "annotation": "pattern",     "narration": "Left character being removed" },
+          { "text": "            if (win[lc] == need[lc]) matches--;",         "annotation": "constraint",  "narration": "Losing a match — decrement" },
+          { "text": "            else if (win[lc] == need[lc]+1) matches++;",  "annotation": "constraint",  "narration": "Removing overshoot — restore match" },
+          { "text": "            win[lc]--;",                                   "annotation": "pattern",     "narration": "Remove from window" },
+          { "text": "        }",                                                 "annotation": "none",        "narration": "" },
+          { "text": "        if (matches == 26) res.add(r-k+1);",             "annotation": "requirement", "narration": "Requirement: all 26 positions agree — valid anagram window" },
+          { "text": "    }",                                                     "annotation": "none",        "narration": "" },
+          { "text": "    return res;",                                           "annotation": "requirement", "narration": "Return all positions" },
+          { "text": "}",                                                         "annotation": "none",        "narration": "" }
+        ]
+      },
+      "complexity": { "time": "O(n)", "space": "O(1) — arrays are fixed size 26" },
+      "verbalSummary": "Fixed sliding window of size p.length(). The 'matches' counter avoids comparing all 26 frequencies on each step — only the added and removed characters need to update it. Time O(n), space O(1) since the frequency arrays are fixed at size 26.",
+      "solRatingCriteria": [
+        "Identified the fixed window size (p.length()) immediately",
+        "Used the matches counter trick instead of full array comparison",
+        "Correctly handled both increment and decrement of matches on add/remove",
+        "Stated O(1) space for the fixed-size arrays"
+      ],
+      "modifications": [
+        {
+          "question": "What if the character set is not limited to lowercase letters?",
+          "tag": "unicode",
+          "approach": "Replace int[26] with HashMap<Character, Integer>. The matches counter still works but now tracks the number of characters where need.get(c) == win.get(c). Slightly higher constant factor but same O(n) time.",
+          "codeChunk": "Map<Character, Integer> need = new HashMap<>(), win = new HashMap<>();\n// matches tracks keys where win.get(c).equals(need.get(c))"
+        }
+      ]
+    },
+    {
+      "id": "sw-medium-03",
+      "patternId": "sliding-window",
+      "difficulty": "medium",
+      "index": 3,
+      "conceptTags": ["sliding-window", "frequency-count"],
+      "problem": {
+        "text": "Given a binary array nums and an integer k, return the maximum number of consecutive 1s in the array if you can flip at most k 0s.",
+        "keywords": [
+          { "word": "maximum consecutive 1s", "explanation": "requirement: maximise window length" },
+          { "word": "flip at most k 0s",      "explanation": "window validity: count of 0s in window ≤ k" },
+          { "word": "binary array",            "explanation": "constraint: only 0s and 1s" }
+        ],
+        "missingConstraints": [
+          "Can k be 0 — meaning no flips allowed?",
+          "Can the array be empty?"
+        ],
+        "hasMissingConstraints": true
+      },
+      "concepts": [
+        {
+          "term": "Reframing the problem",
+          "definition": "Flipping at most k zeros is equivalent to finding the longest subarray containing at most k zeros. You don't actually flip anything — you just track how many zeros are in your current window.",
+          "example": "nums = [1,1,0,0,1,1,1,0,1]  k = 2\nWindow [1,1,0,0,1,1,1] has 2 zeros ✓ — length 7\nThis is the answer — no flipping needed in code"
+        }
+      ],
+      "choices": {
+        "easy_medium": [
+          { "id": "A", "text": "Variable sliding window tracking zero count — shrink left when zeros exceed k", "type": "correct",  "explanation": "Expand right; when zerosInWindow > k shrink from left until valid. Track zerosInWindow as a simple counter. O(n) time, O(1) space." },
+          { "id": "B", "text": "Binary search on the answer length, check feasibility for each length", "type": "plausible", "explanation": "O(n log n) — works but unnecessary. The sliding window is O(n) and simpler." },
+          { "id": "C", "text": "DP where dp[i] = max consecutive 1s ending at index i with flips used", "type": "plausible", "explanation": "Possible but over-engineered. This is a textbook sliding window problem — DP adds unnecessary complexity." }
+        ]
+      },
+      "guidedScaffold": "// 1. int left = 0, zeros = 0, maxLen = 0\n// 2. for right from 0 to nums.length-1:\n//    a. if nums[right] == 0: zeros++\n//    b. while zeros > k: if nums[left++] == 0: zeros--\n//    c. maxLen = max(maxLen, right - left + 1)",
+      "sayApproach": "Flipping k zeros is the same as finding the longest window with at most k zeros — I don't actually flip anything. I'll use a variable window with a zero counter. Expand right; if the new element is a zero, increment the counter. When the counter exceeds k, shrink from the left until it's back in range. O(n) time, O(1) space.",
+      "code": {
+        "lines": [
+          { "text": "int solve(int[] nums, int k) {",                           "annotation": "pattern",     "narration": "Takes array and flip budget k" },
+          { "text": "    int left = 0, zeros = 0, maxLen = 0;",                "annotation": "requirement", "narration": "zeros tracks constraint usage; maxLen tracks requirement" },
+          { "text": "    for (int right = 0; right < nums.length; right++) {", "annotation": "pattern",     "narration": "Expand right" },
+          { "text": "        if (nums[right] == 0) zeros++;",                  "annotation": "constraint",  "narration": "Constraint: track zeros entering the window" },
+          { "text": "        while (zeros > k) {",                             "annotation": "constraint",  "narration": "Constraint exceeded — shrink left" },
+          { "text": "            if (nums[left] == 0) zeros--;",               "annotation": "constraint",  "narration": "Did we remove a zero? Update counter" },
+          { "text": "            left++;",                                      "annotation": "pattern",     "narration": "Advance left pointer" },
+          { "text": "        }",                                                "annotation": "none",        "narration": "" },
+          { "text": "        maxLen = Math.max(maxLen, right-left+1);",       "annotation": "requirement", "narration": "Requirement: update maximum length" },
+          { "text": "    }",                                                    "annotation": "none",        "narration": "" },
+          { "text": "    return maxLen;",                                       "annotation": "requirement", "narration": "Return the answer" },
+          { "text": "}",                                                        "annotation": "none",        "narration": "" }
+        ]
+      },
+      "complexity": { "time": "O(n)", "space": "O(1)" },
+      "verbalSummary": "Reframe: find the longest window with at most k zeros. Variable sliding window with a zero counter. Expand right, increment counter when we see a zero. Shrink left when counter exceeds k. O(n) time, O(1) space.",
+      "solRatingCriteria": [
+        "Reframed 'flip k zeros' as 'at most k zeros in window'",
+        "Used a simple integer counter rather than a data structure",
+        "Stated O(n) time and O(1) space",
+        "Handled k=0 edge case implicitly (window immediately shrinks past zeros)"
+      ],
+      "modifications": [
+        {
+          "question": "Now the array contains integers (not just 0/1) — find the longest subarray where you can replace at most k elements to make all values equal to the most frequent element.",
+          "tag": "generalised-replacement",
+          "approach": "Track the max frequency in the current window. If (windowSize - maxFreq) > k, shrink. This is the generalised version of Leetcode 424.",
+          "codeChunk": "maxFreq = Math.max(maxFreq, freq.merge(nums[right], 1, Integer::sum));\nif ((right - left + 1) - maxFreq > k) {\n    freq.merge(nums[left++], -1, Integer::sum);\n}"
+        }
+      ]
+    },
+    {
+      "id": "sw-hard-01",
+      "patternId": "sliding-window",
+      "difficulty": "hard",
+      "index": 1,
+      "conceptTags": ["sliding-window", "hashmap", "frequency-count"],
+      "problem": {
+        "text": "Given strings s and t, return the minimum window substring of s such that every character in t (including duplicates) is included in the window. Return empty string if no valid window exists.",
+        "keywords": [
+          { "word": "minimum window",    "explanation": "requirement: minimise window length" },
+          { "word": "every character",   "explanation": "all chars of t must appear with correct frequency" },
+          { "word": "including duplicates", "explanation": "frequency must match — t='aa' needs two a's in window" }
+        ],
+        "missingConstraints": [
+          "Can s or t be empty?",
+          "Is matching case-sensitive?",
+          "Can t contain characters not present in s?"
+        ],
+        "hasMissingConstraints": true
+      },
+      "concepts": [
+        {
+          "term": "The 'formed' counter pattern",
+          "definition": "Instead of comparing two full frequency maps on every step (O(|charset|)), track how many character types have been satisfied. When formed == required, the window is valid. This reduces the per-step check to O(1).",
+          "example": "t = \"abc\"  →  required = 3 (three distinct chars to satisfy)\nformed counts how many of those 3 are currently met in the window\nWhen formed == 3 → valid window → try to shrink"
+        }
+      ],
+      "choices": {
+        "hard_part1": {
+          "label": "Traversal strategy",
+          "options": [
+            { "id": "P1A", "text": "Variable sliding window (expand until valid, shrink to minimise)", "correct": true  },
+            { "id": "P1B", "text": "Binary search on window size",                                    "correct": false },
+            { "id": "P1C", "text": "Two pointers on sorted string",                                  "correct": false },
+            { "id": "P1D", "text": "BFS over character positions",                                   "correct": false }
+          ]
+        },
+        "hard_part2": {
+          "label": "Tracking structure",
+          "options": [
+            { "id": "P2A", "text": "Monotonic deque for position tracking",  "correct": false },
+            { "id": "P2B", "text": "Min-heap sorted by character frequency",  "correct": false },
+            { "id": "P2C", "text": "HashMap frequency counter + formed int",  "correct": true  },
+            { "id": "P2D", "text": "Boolean visited array per character",      "correct": false }
+          ]
+        }
+      },
+      "guidedScaffold": "// Part 1 — frequency map setup\n// Map<Character,Integer> need from t\n// int required = need.size(), formed = 0\n// Map<Character,Integer> window = new HashMap<>()\n\n// Part 2 — variable sliding window\n// for right from 0 to s.length()-1:\n//   add s[right] to window, update formed if count matches need\n//   while formed == required: update answer, remove s[left], update formed",
+      "sayApproach": "Two concerns: how I move through s, and what I track. I need a variable window — expand right until all of t is covered, then shrink left to minimise. For tracking, a HashMap frequency counter is the right tool: I build 'need' from t and maintain 'window' as I slide. The 'formed' counter tells me how many character types are satisfied without comparing full maps. When formed == required I have a valid window — record its length and shrink.",
+      "code": {
+        "lines": [
+          { "text": "String solve(String s, String t) {",                          "annotation": "pattern",     "narration": "Function returns the minimum window" },
+          { "text": "    Map<Character,Integer> need = new HashMap<>();",           "annotation": "constraint",  "narration": "Build frequency map from t — this is what we need" },
+          { "text": "    for (char c : t.toCharArray()) need.merge(c,1,Integer::sum);","annotation": "constraint","narration": "Count each character in t" },
+          { "text": "    int required = need.size(), formed = 0;",                 "annotation": "constraint",  "narration": "required = distinct char types; formed tracks how many are satisfied" },
+          { "text": "    Map<Character,Integer> win = new HashMap<>();",            "annotation": "pattern",     "narration": "Window frequency map" },
+          { "text": "    int left=0, minLen=Integer.MAX_VALUE, start=0;",          "annotation": "requirement", "narration": "Track minimum window position" },
+          { "text": "    for (int right=0; right<s.length(); right++) {",          "annotation": "pattern",     "narration": "Expand right" },
+          { "text": "        win.merge(s.charAt(right),1,Integer::sum);",          "annotation": "pattern",     "narration": "Add right char to window" },
+          { "text": "        char rc = s.charAt(right);",                          "annotation": "pattern",     "narration": "Reference right char" },
+          { "text": "        if(need.containsKey(rc)&&win.get(rc).equals(need.get(rc))) formed++;","annotation":"constraint","narration":"Constraint: this char type is now satisfied" },
+          { "text": "        while (formed == required) {",                        "annotation": "constraint",  "narration": "Valid window — try to shrink" },
+          { "text": "            if(right-left+1 < minLen){minLen=right-left+1; start=left;}","annotation":"requirement","narration":"Requirement: update minimum" },
+          { "text": "            char lc = s.charAt(left++);",                    "annotation": "pattern",     "narration": "Remove left char and advance" },
+          { "text": "            win.merge(lc,-1,Integer::sum);",                  "annotation": "pattern",     "narration": "Decrement window count" },
+          { "text": "            if(need.containsKey(lc)&&win.get(lc)<need.get(lc)) formed--;","annotation":"constraint","narration":"Constraint: char type no longer satisfied" },
+          { "text": "        }",                                                    "annotation": "none",        "narration": "" },
+          { "text": "    }",                                                        "annotation": "none",        "narration": "" },
+          { "text": "    return minLen==Integer.MAX_VALUE ? \"\" : s.substring(start, start+minLen);","annotation":"requirement","narration":"Requirement: return minimum window or empty" },
+          { "text": "}",                                                            "annotation": "none",        "narration": "" }
+        ]
+      },
+      "complexity": { "time": "O(|s| + |t|)", "space": "O(|s| + |t|)" },
+      "verbalSummary": "Variable sliding window with a frequency map and a formed counter. Expand right until formed == required (all of t satisfied), then shrink left to find the minimum. The formed counter avoids comparing full maps on each step — O(1) per character processed. Overall O(|s| + |t|) time and space.",
+      "solRatingCriteria": [
+        "Correctly identified variable window (not fixed) because minimum is unknown",
+        "Used 'formed' counter to avoid full map comparison per step",
+        "Handled the formed decrement correctly when shrinking (only when count drops below need)",
+        "Returned empty string for no-valid-window case"
+      ],
+      "modifications": [
+        {
+          "question": "What if t can have characters that don't exist in s at all?",
+          "tag": "impossible-case",
+          "approach": "The algorithm handles this naturally — formed never reaches required, so the while loop never executes and we return empty string. Worth mentioning explicitly to the interviewer.",
+          "codeChunk": "// No code change needed — formed never reaches required\n// The algorithm returns \"\" automatically"
+        }
+      ]
+    },
+    {
+      "id": "sw-hard-02",
+      "patternId": "sliding-window",
+      "difficulty": "hard",
+      "index": 2,
+      "conceptTags": ["sliding-window", "frequency-count", "hashmap"],
+      "problem": {
+        "text": "Given a string s, return the number of substrings that contain at least one copy of all the characters 'a', 'b', and 'c'. The string only contains those three characters.",
+        "keywords": [
+          { "word": "number of substrings",  "explanation": "count — not just find one, enumerate all" },
+          { "word": "at least one copy",     "explanation": "window validity: all three chars present" },
+          { "word": "all characters a,b,c",  "explanation": "the window must contain a, b, and c" }
+        ],
+        "missingConstraints": [
+          "Can the string be empty?",
+          "Is the string guaranteed to only contain a, b, c?"
+        ],
+        "hasMissingConstraints": true
+      },
+      "concepts": [
+        {
+          "term": "Counting valid substrings efficiently",
+          "definition": "A direct approach generates all O(n²) substrings. The key insight: once a window starting at left and ending at right is valid (contains all three chars), every extension of that window to the right is also valid. So the count of valid substrings starting at left is (n - right).",
+          "example": "s = \"abcabc\"  n = 6\nWhen window [0..2] = \"abc\" is first valid:\n  all substrings starting at 0: [0..2],[0..3],[0..4],[0..5] = (6-2) = 4\nAdvance left to 1, find next valid right, add (n - right) again"
+        }
+      ],
+      "choices": {
+        "hard_part1": {
+          "label": "Traversal strategy",
+          "options": [
+            { "id": "P1A", "text": "Shrink-from-left: find the minimum valid window, count extensions", "correct": true  },
+            { "id": "P1B", "text": "Expand-until-invalid: count all extensions before shrinking",         "correct": false },
+            { "id": "P1C", "text": "BFS/DFS generating all substrings",                                  "correct": false },
+            { "id": "P1D", "text": "Prefix sum over character presence",                                  "correct": false }
+          ]
+        },
+        "hard_part2": {
+          "label": "Counting structure",
+          "options": [
+            { "id": "P2A", "text": "int[3] frequency array",                   "correct": true  },
+            { "id": "P2B", "text": "HashMap<Character, Integer>",              "correct": false },
+            { "id": "P2C", "text": "Set of seen characters",                   "correct": false },
+            { "id": "P2D", "text": "Three separate boolean flags",             "correct": false }
+          ]
+        }
+      },
+      "guidedScaffold": "// int[] count = new int[3]  (a=0, b=1, c=2)\n// int left = 0, result = 0\n// for right from 0 to s.length()-1:\n//   count[s.charAt(right)-'a']++\n//   while all three chars present:\n//     result += s.length() - right  // all extensions are valid\n//     count[s.charAt(left++)-'a']--",
+      "sayApproach": "Counting all substrings directly is O(n²). The insight is: once I find the minimum valid window ending at 'right', every extension of that window further right is also valid. So instead of counting each one, I add (n - right) in one step. I advance left to find the next minimum valid window. An int[3] array is cleaner than a HashMap here since we only have three characters. O(n) time.",
+      "code": {
+        "lines": [
+          { "text": "int solve(String s) {",                                   "annotation": "pattern",     "narration": "Return count of valid substrings" },
+          { "text": "    int[] cnt = new int[3];",                             "annotation": "constraint",  "narration": "Constraint: only a/b/c — int[3] is sufficient and faster" },
+          { "text": "    int left = 0, res = 0, n = s.length();",             "annotation": "requirement", "narration": "res accumulates the count" },
+          { "text": "    for (int right = 0; right < n; right++) {",          "annotation": "pattern",     "narration": "Expand right" },
+          { "text": "        cnt[s.charAt(right)-'a']++;",                    "annotation": "pattern",     "narration": "Add right character" },
+          { "text": "        while (cnt[0]>0 && cnt[1]>0 && cnt[2]>0) {",    "annotation": "constraint",  "narration": "Constraint: all three chars present — valid window" },
+          { "text": "            res += n - right;",                           "annotation": "requirement", "narration": "Requirement: all extensions from here are valid — count them all" },
+          { "text": "            cnt[s.charAt(left++)-'a']--;",               "annotation": "pattern",     "narration": "Shrink left to find next minimum valid window" },
+          { "text": "        }",                                                "annotation": "none",        "narration": "" },
+          { "text": "    }",                                                    "annotation": "none",        "narration": "" },
+          { "text": "    return res;",                                          "annotation": "requirement", "narration": "Return total count" },
+          { "text": "}",                                                        "annotation": "none",        "narration": "" }
+        ]
+      },
+      "complexity": { "time": "O(n)", "space": "O(1)" },
+      "verbalSummary": "Key insight: once a window is valid, all extensions to the right are also valid — add (n - right) rather than counting individually. Shrink from left to find the next minimum valid window. O(n) time, O(1) space.",
+      "solRatingCriteria": [
+        "Articulated the 'all extensions are valid' counting insight",
+        "Chose int[3] over HashMap for the fixed three-character constraint",
+        "Correctly added (n - right) rather than 1 per valid window",
+        "Stated O(n) time and O(1) space"
+      ],
+      "modifications": [
+        {
+          "question": "Generalise: count substrings containing all k distinct characters of the string.",
+          "tag": "generalised-k-chars",
+          "approach": "Count distinct chars in s first. Then apply the same shrink-and-count approach with a HashMap of size k. The while condition becomes (map.size() == k).",
+          "codeChunk": "int k = (int) s.chars().distinct().count();\nwhile (win.size() == k) {\n    res += n - right;\n    // shrink left\n}"
+        }
+      ]
+    },
+    {
+      "id": "sw-hard-03",
+      "patternId": "sliding-window",
+      "difficulty": "hard",
+      "index": 3,
+      "conceptTags": ["sliding-window", "monotonic-invariant"],
+      "problem": {
+        "text": "Given an integer array nums and an integer k, find the maximum value in each sliding window of size k. Return an array of maximum values.",
+        "keywords": [
+          { "word": "maximum value",          "explanation": "requirement: track max in each window" },
+          { "word": "each sliding window",    "explanation": "output one value per window position" },
+          { "word": "size k",                 "explanation": "fixed window — not variable" }
+        ],
+        "missingConstraints": [
+          "Can k be larger than nums.length?",
+          "Can nums contain negative integers?"
+        ],
+        "hasMissingConstraints": true
+      },
+      "concepts": [
+        {
+          "term": "Monotonic deque",
+          "definition": "A deque (double-ended queue) maintained in decreasing order of values. The front always holds the index of the maximum element in the current window. When a new element is larger than the back of the deque, we pop from the back — those elements can never be the maximum while this larger element is in the window.",
+          "example": "nums = [3,1,2], k=3\nProcess 3: deque=[0]  (index of 3)\nProcess 1: 1<3, push  deque=[0,1]\nProcess 2: 2>1, pop 1. 2<3, push  deque=[0,2]\nFront=0 → nums[0]=3 is the max"
+        }
+      ],
+      "choices": {
+        "hard_part1": {
+          "label": "Window traversal",
+          "options": [
+            { "id": "P1A", "text": "Fixed sliding window, process each position once",   "correct": true  },
+            { "id": "P1B", "text": "Variable sliding window, expand and shrink on condition", "correct": false },
+            { "id": "P1C", "text": "Divide and conquer over the array",                  "correct": false },
+            { "id": "P1D", "text": "Two-pass: left max and right max arrays",             "correct": false }
+          ]
+        },
+        "hard_part2": {
+          "label": "Max tracking structure",
+          "options": [
+            { "id": "P2A", "text": "Min-heap (priority queue)",                          "correct": false },
+            { "id": "P2B", "text": "Monotonic decreasing deque of indices",               "correct": true  },
+            { "id": "P2C", "text": "TreeMap sorted by value",                            "correct": false },
+            { "id": "P2D", "text": "Running max variable",                               "correct": false }
+          ]
+        }
+      },
+      "guidedScaffold": "// Deque<Integer> dq = new ArrayDeque<>()  (stores indices)\n// int[] res = new int[n-k+1]\n// for i from 0 to n-1:\n//   1. remove indices outside window: while dq.peekFirst() < i-k+1: dq.pollFirst()\n//   2. maintain decreasing order: while !dq.isEmpty() && nums[dq.peekLast()] < nums[i]: dq.pollLast()\n//   3. dq.offerLast(i)\n//   4. if i >= k-1: res[i-k+1] = nums[dq.peekFirst()]",
+      "sayApproach": "A simple max variable fails here because when the max leaves the window we'd need to scan the whole window again — O(n) per window = O(nk) total. The monotonic deque solves this: maintain a deque of indices in decreasing order of their values. The front always holds the maximum. When adding a new element, pop from the back while the back is smaller — those elements are dominated and can never be future maxima. Pop from the front when the index falls outside the window. O(n) total.",
+      "code": {
+        "lines": [
+          { "text": "int[] solve(int[] nums, int k) {",                          "annotation": "pattern",     "narration": "Returns max for each window position" },
+          { "text": "    int n = nums.length;",                                  "annotation": "pattern",     "narration": "" },
+          { "text": "    int[] res = new int[n-k+1];",                          "annotation": "requirement", "narration": "Requirement: one output per window" },
+          { "text": "    Deque<Integer> dq = new ArrayDeque<>();",              "annotation": "pattern",     "narration": "Deque stores indices — not values" },
+          { "text": "    for (int i = 0; i < n; i++) {",                       "annotation": "pattern",     "narration": "Process each element once" },
+          { "text": "        while (!dq.isEmpty() && dq.peekFirst() < i-k+1)", "annotation": "constraint",  "narration": "Constraint k: remove indices outside the window" },
+          { "text": "            dq.pollFirst();",                               "annotation": "constraint",  "narration": "Pop front — index expired" },
+          { "text": "        while (!dq.isEmpty() && nums[dq.peekLast()] < nums[i])", "annotation": "pattern", "narration": "Pattern: maintain decreasing order — pop dominated elements" },
+          { "text": "            dq.pollLast();",                                "annotation": "pattern",     "narration": "Back is smaller than current — can never be max while i is here" },
+          { "text": "        dq.offerLast(i);",                                 "annotation": "pattern",     "narration": "Add current index to back" },
+          { "text": "        if (i >= k-1) res[i-k+1] = nums[dq.peekFirst()];","annotation": "requirement", "narration": "Requirement: front holds window max — record once window is full" },
+          { "text": "    }",                                                     "annotation": "none",        "narration": "" },
+          { "text": "    return res;",                                           "annotation": "requirement", "narration": "Return all window maxima" },
+          { "text": "}",                                                         "annotation": "none",        "narration": "" }
+        ]
+      },
+      "complexity": { "time": "O(n)", "space": "O(k)" },
+      "verbalSummary": "Monotonic decreasing deque of indices. Each index enters and exits the deque at most once — O(n) total. The front always holds the window maximum. Maintain decreasing order by popping dominated back elements. Pop the front when it falls outside the window. O(n) time, O(k) space for the deque.",
+      "solRatingCriteria": [
+        "Explained why a simple max variable fails (can't recover when max leaves window)",
+        "Articulated the monotonic decreasing deque invariant clearly",
+        "Stored indices (not values) in the deque for window-expiry check",
+        "Stated O(n) time — each element enters/exits deque at most once"
+      ],
+      "modifications": [
+        {
+          "question": "Find both the minimum and maximum in each window of size k.",
+          "tag": "min-and-max",
+          "approach": "Maintain two deques: one decreasing (for max) and one increasing (for min). Both run in the same loop. O(n) time.",
+          "codeChunk": "// maxDq: decreasing  → front is max\n// minDq: increasing  → front is min\n// Same loop, two deque maintenance blocks"
+        }
+      ]
+    }
+  ]
+}

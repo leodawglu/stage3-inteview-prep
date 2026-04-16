@@ -1,0 +1,88 @@
+/* ─── DESIGN TOKENS ────────────────────────────────────────────────────────── */
+:root {
+  /* Colors — light mode */
+  --color-bg:           #ffffff;
+  --color-bg-subtle:    #f8f8f7;
+  --color-bg-muted:     #f1efe8;
+  --color-border:       rgba(0,0,0,0.12);
+  --color-border-md:    rgba(0,0,0,0.22);
+  --color-text:         #1a1a18;
+  --color-text-2:       #555552;
+  --color-text-3:       #888780;
+
+  /* Pattern / brand */
+  --purple-50:  #EEEDFE;
+  --purple-200: #AFA9EC;
+  --purple-600: #534AB7;
+  --purple-800: #3C3489;
+
+  --teal-50:  #E1F5EE;
+  --teal-400: #1D9E75;
+  --teal-800: #085041;
+
+  --amber-50:  #FAEEDA;
+  --amber-400: #BA7517;
+  --amber-800: #633806;
+
+  --blue-50:  #E6F1FB;
+  --blue-600: #185FA5;
+  --blue-800: #0C447C;
+
+  --red-50:  #FCEBEB;
+  --red-400: #E24B4A;
+  --red-800: #791F1F;
+
+  --green-50:  #E1F5EE;
+  --green-400: #1D9E75;
+  --green-800: #085041;
+
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-pill: 999px;
+
+  /* Shadows — flat design, use sparingly */
+  --shadow-focus: 0 0 0 3px rgba(127, 119, 221, 0.35);
+
+  /* Transitions */
+  --t-fast: 120ms ease;
+  --t-base: 180ms ease;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg:        #1c1c1a;
+    --color-bg-subtle: #242422;
+    --color-bg-muted:  #2c2c2a;
+    --color-border:    rgba(255,255,255,0.10);
+    --color-border-md: rgba(255,255,255,0.18);
+    --color-text:      #e8e6df;
+    --color-text-2:    #a8a69f;
+    --color-text-3:    #6c6a64;
+  }
+}
+
+[data-theme="dark"] {
+  --color-bg:        #1c1c1a;
+  --color-bg-subtle: #242422;
+  --color-bg-muted:  #2c2c2a;
+  --color-border:    rgba(255,255,255,0.10);
+  --color-border-md: rgba(255,255,255,0.18);
+  --color-text:      #e8e6df;
+  --color-text-2:    #a8a69f;
+  --color-text-3:    #6c6a64;
+}
+
+[data-theme="light"] {
+  --color-bg:        #ffffff;
+  --color-bg-subtle: #f8f8f7;
+  --color-bg-muted:  #f1efe8;
+  --color-border:    rgba(0,0,0,0.12);
+  --color-border-md: rgba(0,0,0,0.22);
+  --color-text:      #1a1a18;
+  --color-text-2:    #555552;
+  --color-text-3:    #888780;
+}
