@@ -4,11 +4,11 @@ function EasyMediumChoices({ choices, selected, onSelect, revealed, isGuided }) 
 
   return (
     <div>
-      {display.map((c, i) => {
+      {display.map((c) => {
         let cls = 'choice-btn'
         if (revealed) {
           cls += c.type === 'correct' ? ' correct' : c.type === 'plausible' ? ' plausible' : ' wrong'
-        } else if (selected === i) {
+        } else if (selected === c.id) {
           cls += ' selected'
         }
 
@@ -16,7 +16,7 @@ function EasyMediumChoices({ choices, selected, onSelect, revealed, isGuided }) 
           <div key={c.id}>
             <button
               className={cls}
-              onClick={() => !revealed && onSelect(i)}
+              onClick={() => !revealed && onSelect(c.id)}
               disabled={revealed}
             >
               {c.id}) {c.text}

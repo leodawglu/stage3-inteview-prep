@@ -92,7 +92,7 @@ export default function FlashCard({
       firstChoiceCorrect: isHard
         ? (cardState.mm1 === card.choices.hard_part1?.options.findIndex(o => o.correct) &&
            cardState.mm2 === card.choices.hard_part2?.options.findIndex(o => o.correct))
-        : (card.choices.easy_medium?.[cardState.selectedChoice]?.type === 'correct'),
+        : (card.choices.easy_medium?.find(c => c.id === cardState.selectedChoice)?.type === 'correct'),
       incorrectAttempts: 0,
       solRating: cardState.solRating,
       timerExpired: timer.expired,
@@ -109,7 +109,6 @@ export default function FlashCard({
   function renderProblemText(text, keywords) {
     if (!isGuided || !keywords?.length) return <span>{text}</span>
 
-    let result = text
     const parts = []
     let lastIndex = 0
 
@@ -170,15 +169,13 @@ export default function FlashCard({
       )}
 
       {/* Title hidden/revealed */}
-      {step < CARD_STEPS.TITLE_MODS ? (
-        <div className="title-hidden">??? — title revealed at the end</div>
-      ) : (
+      {isGuided || step >= CARD_STEPS.TITLE_MODS ? (
         <div className="title-revealed">
           <div className="title-revealed-label">Problem name:</div>
-          <div className="title-revealed-name">{card.id.replace(/-/g, ' ').replace(/[a-z0-9]+ [a-z]+[0-9]+ [0-9]+/i, '')}
-            {/* actual title comes from a separate field in full implementation */}
-          </div>
+          <div className="title-revealed-name">{card.problem.text}</div>
         </div>
+      ) : (
+        <div className="title-hidden">??? — title revealed at the end</div>
       )}
 
       {/* ── STEP 1: Problem ── */}
@@ -261,7 +258,7 @@ export default function FlashCard({
           />
 
           <button className="btn-primary btn-full" style={{ marginTop: 10 }}
-            onClick={() => { timer.startSolving(); advance(CARD_STEPS.SELECT) }}>
+            onClick={() => { timer.startSolving(isInterview ? 120000 : null); advance(CARD_STEPS.SELECT) }}>
             I'm ready — start solving →
           </button>
         </>

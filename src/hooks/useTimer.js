@@ -46,10 +46,12 @@ export function useTimer(hidden = false) {
   const reset = useCallback(() => {
     clearInterval(readingRef.current)
     clearInterval(solvingRef.current)
+    solvingLimit.current = null
     setReadingMs(0)
     setSolvingMs(0)
     setSolvingActive(false)
     setExpired(false)
+    readingRef.current = setInterval(() => setReadingMs(ms => ms + 100), 100)
   }, [])
 
   const formatMs = (ms) => {
